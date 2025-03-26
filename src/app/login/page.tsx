@@ -1,64 +1,54 @@
-// src/app/login/page.tsx
 'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import supabase from '../../lib/supabaseClient';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import supabase from '@/lib/supabaseClient'
 
-const Login: React.FC = () => {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState('');
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+    e.preventDefault()
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password: senha,
-    });
+      password,
+    })
 
     if (error) {
-      setErro('Erro ao fazer login: ' + error.message);
+      setError(error.message)
     } else {
-      // Redireciona para a página de Dashboard após login bem-sucedido
-      router.push('/Dashboard');
+      router.push('/Dashboard')
     }
-  };
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-teal-500 to-blue-500">
-      <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md w-full">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">Login</h1>
-        {erro && <p className="text-red-500 mb-4">{erro}</p>}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full px-4 py-2 border rounded-lg"
-            required
-          />
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            placeholder="Senha"
-            className="w-full px-4 py-2 border rounded-lg"
-            required
-          />
-          <button
-            type="submit"
-            className="w-full px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-lg transition duration-300 hover:bg-teal-700"
-          >
-            Entrar
-          </button>
-        </form>
-      </div>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Senha"
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
+        <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
+          Entrar
+        </button>
+      </form>
+      {error && <p className="text-red-500 mt-4">{error}</p>}
     </div>
-  );
-};
-
-export default Login;
+  )
+}
