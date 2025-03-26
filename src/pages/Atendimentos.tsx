@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import supabase from '../lib/supabaseClient'
 import Layout from '../layouts/Layout'
+import { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 // Definição do tipo de usuário
 interface User {
@@ -23,14 +24,14 @@ const Atendimentos = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: session } = await supabase.auth.getSession()
+      const { data: sessionData } = await supabase.auth.getSession()
 
-      if (!session?.session?.user) {
+      if (!sessionData?.session?.user) {
         router.push('/login')
       } else {
         setUser({
-          id: session.session.user.id,
-          email: session.session.user.email || '',
+          id: sessionData.session.user.id,
+          email: sessionData.session.user.email || '',
         })
         setCarregando(false)
       }
@@ -38,20 +39,23 @@ const Atendimentos = () => {
 
     checkUser()
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
-      if (!session?.user) {
-        router.push('/login')
-      } else {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-        })
-        setCarregando(false)
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        if (!session?.user) {
+          router.push('/login')
+        } else {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+          })
+          setCarregando(false)
+        }
       }
-    })
+    )
 
+    // Garantir que subscription existe antes de tentar unsubscribe
     return () => {
-      authListener.subscription.unsubscribe()
+      authListener?.subscription?.unsubscribe()
     }
   }, [router])
 

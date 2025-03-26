@@ -4,10 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import supabase from '../lib/supabaseClient'
 import Layout from '../layouts/Layout'
+import { AuthChangeEvent, Session } from '@supabase/supabase-js'
+
+// Definição do tipo de usuário
+interface User {
+  id: string
+  email: string
+}
 
 const Dashboard = () => {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
@@ -17,20 +24,32 @@ const Dashboard = () => {
       if (!session?.user) {
         router.push('/login') // Redireciona para login se não estiver autenticado
       } else {
-        setUser(session.user)
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+        })
       }
       setCarregando(false) // Garantir que o carregamento é finalizado
     }
 
     checkUser()
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
-      if (!session?.user) router.push('/login')
-    })
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        if (!session?.user) {
+          router.push('/login')
+        } else {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+          })
+        }
+      }
+    )
 
+    // Garantir que subscription existe antes de tentar unsubscribe
     return () => {
-      authListener.subscription.unsubscribe()
+      authListener?.subscription?.unsubscribe()
     }
   }, [router])
 

@@ -4,10 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import supabase from '../lib/supabaseClient'
 import Layout from '../layouts/Layout'
+import { AuthChangeEvent, Session } from '@supabase/supabase-js'
+
+// Definição do tipo de usuário
+interface User {
+  id: string
+  email: string
+}
 
 const CadastrarCIN = () => {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [cpf, setCpf] = useState('')
   const [sucesso, setSucesso] = useState('')
   const [erro, setErro] = useState('')
@@ -15,29 +22,37 @@ const CadastrarCIN = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: session } = await supabase.auth.getSession()
+      const { data: sessionData } = await supabase.auth.getSession()
 
-      if (!session?.session?.user) {
+      if (!sessionData?.session?.user) {
         router.push('/login')
       } else {
-        setUser(session.session.user)
+        setUser({
+          id: sessionData.session.user.id,
+          email: sessionData.session.user.email || '',
+        })
         setCarregando(false)
       }
     }
 
     checkUser()
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
-      if (!session?.user) {
-        router.push('/login')
-      } else {
-        setUser(session.user)
-        setCarregando(false)
+    const { subscription } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        if (!session?.user) {
+          router.push('/login')
+        } else {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+          })
+          setCarregando(false)
+        }
       }
-    })
+    )
 
     return () => {
-      authListener?.subscription?.unsubscribe()
+      subscription?.unsubscribe()
     }
   }, [router])
 

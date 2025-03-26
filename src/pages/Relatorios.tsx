@@ -6,10 +6,23 @@ import Layout from '../layouts/Layout'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
+// Definição do tipo para os dados de atendimento
+interface Atendimento {
+  id: string
+  nome: string
+  cpf: string
+  dia_atual: string
+  solicitante: string
+  email?: string // Opcional, caso esteja presente
+  usuario_id?: string // Opcional, caso esteja presente
+  created_at?: string // Opcional
+  updated_at?: string // Opcional
+}
+
 const Relatorios = () => {
   const [dataInicial, setDataInicial] = useState('')
   const [dataFinal, setDataFinal] = useState('')
-  const [resultados, setResultados] = useState<any[]>([])
+  const [resultados, setResultados] = useState<Atendimento[]>([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
@@ -58,13 +71,13 @@ const Relatorios = () => {
       atendimento.nome,
       atendimento.cpf,
       atendimento.dia_atual,
-      atendimento.solicitante
+      atendimento.solicitante,
     ])
 
     autoTable(doc, {
       head: [['Nome', 'CPF', 'Data', 'Solicitante']],
       body: tabela,
-      startY: 20
+      startY: 20,
     })
 
     doc.save('relatorio_atendimentos.pdf')
@@ -101,7 +114,9 @@ const Relatorios = () => {
         <button
           onClick={buscarAtendimentos}
           disabled={carregando}
-          className={`w-full p-2 text-white font-semibold rounded ${carregando ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}`}
+          className={`w-full p-2 text-white font-semibold rounded ${
+            carregando ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+          }`}
         >
           {carregando ? 'Buscando...' : 'Buscar Atendimentos'}
         </button>

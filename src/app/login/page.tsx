@@ -1,31 +1,31 @@
 // src/app/login/page.tsx
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import supabase from '../../lib/supabaseClient'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import supabase from '../../lib/supabaseClient';
 
-const Login = () => {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState('')
+const Login: React.FC = () => {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password: senha,
-    })
+    });
 
     if (error) {
-      setErro('Erro ao fazer login: ' + error.message)
+      setErro('Erro ao fazer login: ' + error.message);
     } else {
-      // Redireciona para a página de Atendimentos após login bem-sucedido
-      router.push('/Atendimentos')
+      // Redireciona para a página de Dashboard após login bem-sucedido
+      router.push('/Dashboard');
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-teal-500 to-blue-500">
@@ -58,7 +58,7 @@ const Login = () => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

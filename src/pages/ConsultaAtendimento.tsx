@@ -4,9 +4,22 @@ import { useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import Layout from '../layouts/Layout'
 
+// Definição do tipo para os dados de atendimento
+interface Atendimento {
+  id: string
+  nome: string
+  cpf: string
+  dia_atual: string
+  solicitante: string
+  email?: string // Opcional, caso esteja presente em alguns registros
+  usuario_id?: string // Opcional, caso esteja presente
+  created_at?: string // Opcional
+  updated_at?: string // Opcional
+}
+
 const ConsultaAtendimento = () => {
   const [termoBusca, setTermoBusca] = useState('')
-  const [resultados, setResultados] = useState<any[]>([])
+  const [resultados, setResultados] = useState<Atendimento[]>([])
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
