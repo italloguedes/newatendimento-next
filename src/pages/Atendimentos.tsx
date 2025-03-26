@@ -5,9 +5,15 @@ import { useRouter } from 'next/navigation'
 import supabase from '../lib/supabaseClient'
 import Layout from '../layouts/Layout'
 
+// Definição do tipo de usuário
+interface User {
+  id: string
+  email: string
+}
+
 const Atendimentos = () => {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
   const [email, setEmail] = useState('')
@@ -20,9 +26,12 @@ const Atendimentos = () => {
       const { data: session } = await supabase.auth.getSession()
 
       if (!session?.session?.user) {
-        router.push('/login') // Redireciona para login se não estiver autenticado
+        router.push('/login')
       } else {
-        setUser(session.session.user)
+        setUser({
+          id: session.session.user.id,
+          email: session.session.user.email || '',
+        })
         setCarregando(false)
       }
     }
@@ -33,7 +42,10 @@ const Atendimentos = () => {
       if (!session?.user) {
         router.push('/login')
       } else {
-        setUser(session.user)
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+        })
         setCarregando(false)
       }
     })
@@ -45,31 +57,29 @@ const Atendimentos = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/login') // Redireciona para a página de login após o logout
+    router.push('/login')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-  
-    // Pegando a data e hora atual
+
     const diaAtual = new Date().toISOString()
-    const horario = new Date().toISOString()  // Aqui é o horário atual
-  
-    // Enviando os dados para o Supabase
-    const { data, error } = await supabase.from('atendimentos').insert([
+    const horario = new Date().toISOString()
+
+    const { error } = await supabase.from('atendimentos').insert([
       {
         nome,
         cpf,
         email,
         solicitante,
-        dia_atual: diaAtual, // A data e hora do cadastro
-        horario,             // Salvando o horário
-        usuario_id: user?.id,   // ID do usuário logado
-        created_at: diaAtual, // Coluna de criação
-        updated_at: diaAtual, // Coluna de atualização
+        dia_atual: diaAtual,
+        horario,
+        usuario_id: user?.id,
+        created_at: diaAtual,
+        updated_at: diaAtual,
       },
     ])
-  
+
     if (error) {
       alert('Erro ao cadastrar atendimento: ' + error.message)
     } else {

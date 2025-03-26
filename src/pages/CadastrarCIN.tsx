@@ -10,6 +10,7 @@ const CadastrarCIN = () => {
   const [user, setUser] = useState<any>(null)
   const [cpf, setCpf] = useState('')
   const [sucesso, setSucesso] = useState('')
+  const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
@@ -17,7 +18,7 @@ const CadastrarCIN = () => {
       const { data: session } = await supabase.auth.getSession()
 
       if (!session?.session?.user) {
-        router.push('/login') // Redireciona para login se não estiver autenticado
+        router.push('/login')
       } else {
         setUser(session.session.user)
         setCarregando(false)
@@ -36,39 +37,35 @@ const CadastrarCIN = () => {
     })
 
     return () => {
-      authListener.subscription.unsubscribe()
+      authListener?.subscription?.unsubscribe()
     }
   }, [router])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/login') // Redireciona para a página de login após o logout
+    router.push('/login')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErro('')
+    setSucesso('')
 
-    // Busca o nome e CPF na tabela 'atendimentos'
+    const cpfLimpo = cpf.replace(/\D/g, '')
+
     const { data: atendimento, error: atendimentoError } = await supabase
       .from('atendimentos')
       .select('nome, cpf')
-      .eq('cpf', cpf)
-      .single() // A busca vai retornar um único registro ou nenhum
+      .eq('cpf', cpfLimpo)
+      .single()
 
-    if (atendimentoError) {
-      alert('Erro ao buscar atendimento: ' + atendimentoError.message)
+    if (atendimentoError || !atendimento) {
+      setErro('CPF não encontrado no banco de atendimentos ou erro na consulta.')
       return
     }
 
-    if (!atendimento) {
-      alert('CPF não encontrado no banco de atendimentos.')
-      return
-    }
-
-    // Pegando a data e hora atual
     const diaAtual = new Date().toISOString()
 
-    // Enviando os dados para a tabela 'cins'
     const { error } = await supabase.from('cins').insert([
       {
         cpf: atendimento.cpf,
@@ -80,10 +77,10 @@ const CadastrarCIN = () => {
     ])
 
     if (error) {
-      alert('Erro ao cadastrar a CIN: ' + error.message)
+      setErro('Erro ao cadastrar a CIN: ' + error.message)
     } else {
       setSucesso('CIN cadastrada com sucesso!')
-      setCpf('') // Limpa o campo CPF
+      setCpf('')
     }
   }
 
@@ -113,7 +110,8 @@ const CadastrarCIN = () => {
         <button type="submit">Cadastrar CIN</button>
       </form>
 
-      {sucesso && <p>{sucesso}</p>}
+      {erro && <p style={{ color: 'red' }}>{erro}</p>}
+      {sucesso && <p style={{ color: 'green' }}>{sucesso}</p>}
     </Layout>
   )
 }

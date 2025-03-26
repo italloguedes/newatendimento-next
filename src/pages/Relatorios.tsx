@@ -4,7 +4,7 @@ import { useState } from 'react'
 import supabase from '../lib/supabaseClient'
 import Layout from '../layouts/Layout'
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable' // Importação correta
+import autoTable from 'jspdf-autotable'
 
 const Relatorios = () => {
   const [dataInicial, setDataInicial] = useState('')
@@ -14,13 +14,19 @@ const Relatorios = () => {
   const [erro, setErro] = useState<string | null>(null)
 
   const buscarAtendimentos = async () => {
+    setErro(null)
+
     if (!dataInicial || !dataFinal) {
       setErro('Selecione uma data inicial e final.')
       return
     }
 
+    if (dataFinal < dataInicial) {
+      setErro('A data final não pode ser menor que a data inicial.')
+      return
+    }
+
     setCarregando(true)
-    setErro(null)
 
     const { data, error } = await supabase
       .from('atendimentos')
@@ -29,7 +35,7 @@ const Relatorios = () => {
       .lte('dia_atual', dataFinal)
 
     if (error) {
-      setErro('Erro ao buscar atendimentos.')
+      setErro('Erro ao buscar atendimentos: ' + error.message)
     } else if (data.length === 0) {
       setErro('Nenhum atendimento encontrado no período.')
     } else {
@@ -55,7 +61,6 @@ const Relatorios = () => {
       atendimento.solicitante
     ])
 
-    // Chamada correta de autoTable
     autoTable(doc, {
       head: [['Nome', 'CPF', 'Data', 'Solicitante']],
       body: tabela,
@@ -67,53 +72,59 @@ const Relatorios = () => {
 
   return (
     <Layout>
-      <div className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-4">Gerar Relatórios</h1>
+      <div className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md mt-10">
+        <h1 className="text-2xl font-bold text-center mb-4">Gerar Relatórios</h1>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Data Inicial:</label>
-          <input
-            type="date"
-            value={dataInicial}
-            onChange={(e) => setDataInicial(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
+        {/* Inputs de data */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-gray-700">Data Inicial:</label>
+            <input
+              type="date"
+              value={dataInicial}
+              onChange={(e) => setDataInicial(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700">Data Final:</label>
+            <input
+              type="date"
+              value={dataFinal}
+              onChange={(e) => setDataFinal(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Data Final:</label>
-          <input
-            type="date"
-            value={dataFinal}
-            onChange={(e) => setDataFinal(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-        </div>
-
+        {/* Botão de busca */}
         <button
           onClick={buscarAtendimentos}
           disabled={carregando}
-          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className={`w-full p-2 text-white font-semibold rounded ${carregando ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}`}
         >
           {carregando ? 'Buscando...' : 'Buscar Atendimentos'}
         </button>
 
-        {erro && <p className="text-red-500 mt-4">{erro}</p>}
+        {/* Exibição de erros */}
+        {erro && <p className="text-red-500 text-center mt-4">{erro}</p>}
 
+        {/* Resultados da busca */}
         {resultados.length > 0 && (
           <div className="mt-6">
-            <h2 className="text-xl font-semibold mb-2">Resultados:</h2>
-            <ul className="border border-gray-300 rounded p-4">
+            <h2 className="text-xl font-semibold mb-2 text-center">Resultados</h2>
+            <div className="border border-gray-300 rounded p-4 max-h-60 overflow-y-auto">
               {resultados.map((atendimento) => (
-                <li key={atendimento.id} className="border-b py-2">
-                  <strong>Nome:</strong> {atendimento.nome} <br />
-                  <strong>CPF:</strong> {atendimento.cpf} <br />
-                  <strong>Data:</strong> {atendimento.dia_atual} <br />
-                  <strong>Solicitante:</strong> {atendimento.solicitante}
-                </li>
+                <div key={atendimento.id} className="border-b py-2">
+                  <p><strong>Nome:</strong> {atendimento.nome}</p>
+                  <p><strong>CPF:</strong> {atendimento.cpf}</p>
+                  <p><strong>Data:</strong> {atendimento.dia_atual}</p>
+                  <p><strong>Solicitante:</strong> {atendimento.solicitante}</p>
+                </div>
               ))}
-            </ul>
+            </div>
 
+            {/* Botão de gerar PDF */}
             <button
               onClick={gerarPDF}
               className="w-full mt-4 p-2 bg-green-500 text-white rounded hover:bg-green-600"

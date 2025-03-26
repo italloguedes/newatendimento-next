@@ -18,23 +18,19 @@ const Dashboard = () => {
         router.push('/login') // Redireciona para login se não estiver autenticado
       } else {
         setUser(session.user)
-        setCarregando(false)
       }
+      setCarregando(false) // Garantir que o carregamento é finalizado
     }
 
     checkUser()
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        router.push('/login')
-      } else {
-        setUser(session.user)
-        setCarregando(false)
-      }
+      setUser(session?.user || null)
+      if (!session?.user) router.push('/login')
     })
 
     return () => {
-      authListener?.subscription?.unsubscribe()
+      authListener.subscription.unsubscribe()
     }
   }, [router])
 

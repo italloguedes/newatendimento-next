@@ -10,23 +10,29 @@ const ConsultaAtendimento = () => {
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
+  const formatarCPF = (cpf: string) => {
+    return cpf.replace(/\D/g, '') // Remove tudo que não for número
+  }
+
   const buscarAtendimentos = async () => {
-    if (!termoBusca) {
-      setErro('Digite um nome ou CPF para buscar.')
+    const termoFormatado = formatarCPF(termoBusca).trim()
+    if (!termoFormatado) {
+      setErro('Digite um nome ou CPF válido para buscar.')
       return
     }
 
     setCarregando(true)
     setErro(null)
+    setResultados([])
 
     const { data, error } = await supabase
       .from('atendimentos')
       .select('*')
-      .or(`cpf.ilike.%${termoBusca}%,nome.ilike.%${termoBusca}%`)
+      .or(`cpf.ilike.%${termoFormatado}%,nome.ilike.%${termoBusca}%`)
 
     if (error) {
-      setErro('Erro ao buscar atendimentos.')
-    } else if (data.length === 0) {
+      setErro('Erro ao buscar atendimentos. Tente novamente.')
+    } else if (!data || data.length === 0) {
       setErro('Nenhum atendimento encontrado.')
     } else {
       setResultados(data)
@@ -53,7 +59,7 @@ const ConsultaAtendimento = () => {
         <button
           onClick={buscarAtendimentos}
           disabled={carregando}
-          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
         >
           {carregando ? 'Buscando...' : 'Buscar'}
         </button>
@@ -66,10 +72,10 @@ const ConsultaAtendimento = () => {
             <ul className="border border-gray-300 rounded p-4">
               {resultados.map((atendimento) => (
                 <li key={atendimento.id} className="border-b py-2">
-                  <strong>Nome:</strong> {atendimento.nome} <br />
-                  <strong>CPF:</strong> {atendimento.cpf} <br />
-                  <strong>Data:</strong> {atendimento.dia_atual} <br />
-                  <strong>Solicitante:</strong> {atendimento.solicitante}
+                  <p><strong>Nome:</strong> {atendimento.nome}</p>
+                  <p><strong>CPF:</strong> {atendimento.cpf}</p>
+                  <p><strong>Data:</strong> {new Date(atendimento.dia_atual).toLocaleDateString()}</p>
+                  <p><strong>Solicitante:</strong> {atendimento.solicitante}</p>
                 </li>
               ))}
             </ul>
